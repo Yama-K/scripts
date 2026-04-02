@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Version 1.0
+
+# Check if an argument was provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <file_or_directory>"
+    exit 1
+fi
+
+TARGET="$1"
+
+if [ -d "$TARGET" ]; then
+    echo "Nuking directory: $TARGET"
+    find "$TARGET" -type f -exec shred -n 1 -uzv {} +
+    rm -rf "$TARGET"
+    echo "Directory wiped and removed."
+elif [ -f "$TARGET" ]; then
+    shred -n 1 -uzv "$TARGET"
+else
+    echo "Error: '$TARGET' is not a valid file or directory."
+    exit 1
+fi

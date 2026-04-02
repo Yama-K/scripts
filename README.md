@@ -1,5 +1,5 @@
 ##### bleach: file shredder
-usage: bleach directory/file
+usage: bleach directory/file. --trash (shred trash)
 ##### simpleconvert: convert to other formats
 usage: simpleconvert file.webp png
 ##### syncnow: just fancy sync command
