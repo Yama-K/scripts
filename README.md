@@ -5,4 +5,4 @@ usage: simpleconvert file.webp png
 ##### syncnow: just fancy sync command
 usage: syncnow
 ##### webp-to-png: checks for .webp file extensions and converts them to png
-usage: webp-to-png /path/to/directory (or just navigate to the directory and run webp-to-png)
+usage: webp-to-png. --new (convert in new directory)
