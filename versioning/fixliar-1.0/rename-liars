@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#fixliars script
+#Renames files pretending to be jpeg when they're actually webp.
+#Version 1.0
+
+find . -name "*.jpg" -exec sh -c '
+  if file "$1" | grep -q "Web/P"; then
+    newname="${1%.jpg}.webp"
+    mv "$1" "$newname"
+    echo "Renamed: $1 -> $newname"
+  fi
+' _ {} \;

@@ -1,0 +1,41 @@
+#!/bin/bash
+# wtp (webp-to-png)
+#
+# Version 1.1
+
+USE_SUBFOLDER=false
+TARGET_DIR="."
+
+# Parse args
+for arg in "$@"; do
+    case "$arg" in
+        --new) USE_SUBFOLDER=true ;;
+        *)     TARGET_DIR="$arg" ;;
+    esac
+done
+
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo "Error: '$TARGET_DIR' is not a valid directory."
+    exit 1
+fi
+
+cd "$TARGET_DIR" || exit
+
+if $USE_SUBFOLDER; then
+    OUTPUT_DIR="converted_pngs"
+    mkdir -p "$OUTPUT_DIR"
+else
+    OUTPUT_DIR="."
+fi
+
+for file in *.webp; do
+    [ -e "$file" ] || { echo "No .webp files found in $(pwd)"; exit; }
+
+    filename="${file%.*}"
+
+    ffmpeg -i "$file" -n -loglevel error "${OUTPUT_DIR}/${filename}.png"
+
+    echo "Converted: $file"
+done
+
+echo "Done, check ${TARGET_DIR}."

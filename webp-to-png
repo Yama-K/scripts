@@ -1,41 +1,70 @@
 #!/bin/bash
-# wtp (webp-to-png)
-#
-# Version 1.1
+# webp-to-png (wtp)
+# Converts WebP images to PNG, with optional traversal, subfolder output, and deletion.
+# Version 2.0
+# Usage: webp-to-png [options] [directory]
+#   -n, --new       Output to 'converted_pngs' subfolder
+#   -d, --delete    Delete original WebP after successful conversion
+#   -nd / -dn       Both of the above
 
 USE_SUBFOLDER=false
-TARGET_DIR="."
+DELETE_ORIGINAL=false
+TARGET="."
 
-# Parse args
-for arg in "$@"; do
-    case "$arg" in
-        --new) USE_SUBFOLDER=true ;;
-        *)     TARGET_DIR="$arg" ;;
+# Parse combined short flags and long flags
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --new)    USE_SUBFOLDER=true ;;
+        --delete) DELETE_ORIGINAL=true ;;
+        -*)
+            # Handle combined short flags e.g. -nd -dn -n -d
+            flags="${1#-}"
+            for (( i=0; i<${#flags}; i++ )); do
+                case "${flags:$i:1}" in
+                    n) USE_SUBFOLDER=true ;;
+                    d) DELETE_ORIGINAL=true ;;
+                    *) echo "Unknown flag: -${flags:$i:1}" >&2; exit 1 ;;
+                esac
+            done
+            ;;
+        *) TARGET="$1" ;;
     esac
+    shift
 done
 
-if [[ ! -d "$TARGET_DIR" ]]; then
-    echo "Error: '$TARGET_DIR' is not a valid directory."
+if [[ ! -d "$TARGET" ]]; then
+    echo "Error: '$TARGET' is not a valid directory." >&2
     exit 1
 fi
 
-cd "$TARGET_DIR" || exit
+CHECKED=0
+CONVERTED=0
+FAILED=0
 
-if $USE_SUBFOLDER; then
-    OUTPUT_DIR="converted_pngs"
-    mkdir -p "$OUTPUT_DIR"
-else
-    OUTPUT_DIR="."
-fi
+while IFS= read -r -d '' file; do
+    ((CHECKED++))
 
-for file in *.webp; do
-    [ -e "$file" ] || { echo "No .webp files found in $(pwd)"; exit; }
+    if $USE_SUBFOLDER; then
+        # Mirror directory structure under converted_pngs
+        rel="${file#$TARGET/}"
+        outdir="$TARGET/converted_pngs/$(dirname "$rel")"
+        mkdir -p "$outdir"
+        outfile="$outdir/$(basename "${file%.webp}.png")"
+    else
+        outfile="${file%.webp}.png"
+    fi
 
-    filename="${file%.*}"
+    if ffmpeg -i "$file" -n -loglevel error "$outfile"; then
+        ((CONVERTED++))
+        if $DELETE_ORIGINAL; then
+            rm "$file"
+        fi
+    else
+        ((FAILED++))
+    fi
 
-    ffmpeg -i "$file" -n -loglevel error "${OUTPUT_DIR}/${filename}.png"
+    printf "\rScanning... checked %d / converted %d / failed %d" "$CHECKED" "$CONVERTED" "$FAILED"
 
-    echo "Converted: $file"
-done
+done < <(find "$TARGET" -name "*.webp" -print0)
 
-echo "Done, check ${TARGET_DIR}."
+printf "\nDone. %d checked, %d converted, %d failed.\n" "$CHECKED" "$CONVERTED" "$FAILED"

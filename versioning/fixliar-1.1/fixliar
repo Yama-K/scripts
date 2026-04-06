@@ -1,0 +1,22 @@
+#!/bin/bash
+# fixliar - Rename Liars script
+# Renames files pretending to be JPEG when they're actually WebP.
+# Version 1.1
+# Usage: fixliar [directory]
+
+TARGET="${1:-.}"
+
+if [[ ! -d "$TARGET" ]]; then
+    echo "Error: '$TARGET' is not a valid directory." >&2
+    exit 1
+fi
+
+COUNT=0
+
+find "$TARGET" -name "*.jpg" -exec sh -c '
+    if file "$1" | grep -q "Web/P"; then
+        newname="${1%.jpg}.webp"
+        mv "$1" "$newname"
+        echo "Renamed: $1 -> $newname"
+    fi
+' _ {} \;
