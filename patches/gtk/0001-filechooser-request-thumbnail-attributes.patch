@@ -1,0 +1,22 @@
+diff --git a/gtk/gtkfilechooserwidget.c b/gtk/gtkfilechooserwidget.c
+index 729abcc6f2..883e04e001 100644
+--- a/gtk/gtkfilechooserwidget.c
++++ b/gtk/gtkfilechooserwidget.c
+@@ -384,11 +384,12 @@ enum {
+ 
+ static guint signals[LAST_SIGNAL] = { 0 };
+ 
+-#define MODEL_ATTRIBUTES "standard::name,standard::type,standard::display-name," \
+-                         "standard::is-hidden,standard::is-backup,standard::size," \
+-                         "standard::content-type,standard::fast-content-type,time::modified,time::access," \
+-                         "access::can-rename,access::can-delete,access::can-trash," \
+-                         "standard::target-uri"
++#define MODEL_ATTRIBUTES  "standard::name,standard::type,standard::display-name," \
++                          "standard::is-hidden,standard::is-backup,standard::size," \
++                          "standard::content-type,standard::fast-content-type,time::modified,time::access," \
++                          "access::can-rename,access::can-delete,access::can-trash," \
++                          "standard::target-uri," \
++                          "thumbnail::path,thumbnail::is-valid"
+ 
+ #define DEFAULT_RECENT_FILES_LIMIT 50
+ 
