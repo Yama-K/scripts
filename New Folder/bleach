@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+# Version 1.1
+shred_target() {
+    local TARGET="$1"
+    if [ -d "$TARGET" ]; then
+        echo "Nuking directory: $TARGET"
+        find "$TARGET" -type f -exec shred -n 1 -uzv {} +
+        rm -rf "$TARGET"
+        echo "Directory wiped and removed."
+    elif [ -f "$TARGET" ]; then
+        shred -n 1 -uzv "$TARGET"
+    else
+        echo "Error: '$TARGET' is not a valid file or directory."
+        exit 1
+    fi
+}
+
+shred_trash() {
+    local MYUID
+    MYUID=$(id -u)
+    local found=0
+
+    # Always check user's home trash
+    local home_trash="$HOME/.local/share/Trash"
+    if [ -d "$home_trash" ]; then
+        echo "==> Found home trash: $home_trash"
+        for subdir in files expunged; do
+            [ -d "$home_trash/$subdir" ] && shred_target "$home_trash/$subdir"
+        done
+        rm -f "$home_trash/info/"*.trashinfo 2>/dev/null
+        found=1
+    fi
+
+    # Check mounted drives for per-drive trash (FreeDesktop spec)
+    while IFS= read -r mountpoint; do
+        local drive_trash="$mountpoint/.Trash-$MYUID"
+        if [ -d "$drive_trash" ]; then
+            echo "==> Found drive trash: $drive_trash"
+            for subdir in files expunged; do
+                [ -d "$drive_trash/$subdir" ] && shred_target "$drive_trash/$subdir"
+            done
+            rm -f "$drive_trash/info/"*.trashinfo 2>/dev/null
+            rm -rf "$drive_trash"
+            found=1
+        fi
+    done < <(findmnt -rno TARGET 2>/dev/null | grep -v '^/$\|^/sys\|^/proc\|^/dev\|^/run')
+
+    if [ "$found" -eq 0 ]; then
+        echo "No trash bins found. Already spotless."
+    else
+        echo "All trash incinerated."
+    fi
+}
+
+# --- Main ---
+
+if [ "$1" = "--trash" ]; then
+    shred_trash
+elif [ -z "$1" ]; then
+    echo "Usage: $0 <file_or_directory>"
+    echo "       $0 --trash"
+    exit 1
+else
+    shred_target "$1"
+fi
